@@ -13,6 +13,7 @@ function BlockSettings({setIsShowingSettings}) {
   const globalConfig = useGlobalConfig();
   const base = useBase();
   const table = base.getTableByIdIfExists(globalConfig.get('tableId'));
+  const customCss = globalConfig.get('customCss');
   const settings = validateSettings();
   const canSetSettings = globalConfig.checkPermissionsForSet('customCss').hasPermission;
 
@@ -37,7 +38,7 @@ function BlockSettings({setIsShowingSettings}) {
       </FormField>
       <FormField
         label="WordPress Post Id field (required)"
-        description="Users must have permissions to update this number field"
+        description="This block sets this value so users must have permissions to update this number field"
       >
         <FieldPickerSynced table={table}
           allowedTypes={["number"]}
@@ -101,6 +102,19 @@ function BlockSettings({setIsShowingSettings}) {
           globalConfigKey='stickyFieldId'
         />
       </FormField>
+      <FormField
+        label="Custom CSS for preview (optional)"
+        description="Used only when previewing the post content"
+      >
+        <textarea
+          value={customCss}
+          placeholder="Enter custom css to use when displaying the html preview."
+          rows= "5"
+          style={{width: '100%', resize:'none'}}
+          onChange={(e)=>globalConfig.setAsync('customCss', e.target.value)}
+          disabled={!canSetSettings}
+        />
+      </FormField>
 
       <div style={{display: 'flex', 'justifyContent': 'flex-end'}}>
       <Button
@@ -129,22 +143,22 @@ function validateSettings() {
     return false;
   }
   // check if there are the required fields
-  const postIdField = table ? table.getFieldByIdIfExists(globalConfig.get('postIdFieldId')) : null;
-  const titleField = table ? table.getFieldByIdIfExists(globalConfig.get('titleFieldId')) : null;
-  const contentField = table ? table.getFieldByIdIfExists(globalConfig.get('contentFieldId')) : null;
+  const postIdField = table.getFieldByIdIfExists(globalConfig.get('postIdFieldId'));
+  const titleField = table.getFieldByIdIfExists(globalConfig.get('titleFieldId'));
+  const contentField = table.getFieldByIdIfExists(globalConfig.get('contentFieldId'));
   if (!postIdField || !titleField || !contentField) {
     return false;
   }
   // check for optional fields
-  const slugField = table ? table.getFieldByIdIfExists(globalConfig.get('slugFieldId')) : null;
-  const dateField = table ? table.getFieldByIdIfExists(globalConfig.get('dateFieldId')) : null;
-  // date field must show a time
-  if (dateField.type != "dateTime") {
+  const slugField = table.getFieldByIdIfExists(globalConfig.get('slugFieldId'));
+  const dateField = table.getFieldByIdIfExists(globalConfig.get('dateFieldId'));
+  // if there is a date field, it must show a time
+  if (dateField && dateField.type != "dateTime") {
     return false;
   }
-  const stickyField = table ? table.getFieldByIdIfExists(globalConfig.get('stickyFieldId')) : null;
-  const categoryField = table ? table.getFieldByIdIfExists(globalConfig.get('categoryFieldId')) : null;
-  const tagField = table ? table.getFieldByIdIfExists(globalConfig.get('tagFieldId')) : null;
+  const stickyField = table.getFieldByIdIfExists(globalConfig.get('stickyFieldId'));
+  const categoryField = table.getFieldByIdIfExists(globalConfig.get('categoryFieldId'));
+  const tagField = table.getFieldByIdIfExists(globalConfig.get('tagFieldId'));
   return {
     "wordPressDomain" : globalConfig.get('wordPressDomain'),
     "table": table,
@@ -156,6 +170,7 @@ function validateSettings() {
     "stickyField": stickyField,
     "categoryField": categoryField,
     "tagField": tagField,
+    "customCss" : globalConfig.get('customCss'),
   };
 }
 

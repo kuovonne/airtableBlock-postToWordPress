@@ -44,15 +44,15 @@
           border="none"
           backgroundColor="white"
           padding="15px"
-          width="100vw"
-          height="100vh"
+          width="100%"
+          height="100%"
           display="flex"
           flexDirection="column"
           alignItems="center"
           justifyContent="center"
         >
           <Text textAlign='center' margin='1em'>
-            This block creates and updates posts on the<br/>
+            Use this block to create, update, and delete posts on the<br/>
             <strong>{wordPressDomain}</strong> website<br/>
             from records in the <strong>{table.name}</strong> table.
           </Text>
@@ -81,15 +81,16 @@
           border="none"
           backgroundColor="white"
           padding="15px"
-          width="100vw"
-          height="100vh"
+          width="100%"
+          height="100%"
           display="flex"
           flexDirection="column"
           alignItems="center"
           justifyContent="center"
         >
         <Text textAlign='center' margin='1em'>
-          Select a record to post it to the<br/>
+          Select a record to in a <b>grid view</b><br/>
+          to publish or delete it from the<br/>
           <strong>{wordPressDomain}</strong> website.
         </Text>
         </Box>

@@ -3,11 +3,13 @@ import {
   Button,
   Loader,
   Text,
+  Tooltip,
 } from '@airtable/blocks/ui';
 import React, {useState, useEffect} from 'react';
 import {
   newWordPressPost,
   updateWordPressPost,
+  deleteWordPressPost,
 } from './wordPressApiHelperFunctions';
 
 function PostRecordToWordPress({table, record, settings, jsonWebToken}) {
@@ -15,6 +17,8 @@ function PostRecordToWordPress({table, record, settings, jsonWebToken}) {
   const [fetchStatus, setFetchStatus] = useState("notAttempted");
   // get domain name
   const wordPressDomain = settings.wordPressDomain;
+  // get fields from settings
+  // const {postIdField, titleField, contentField, slugField, dateField, stickyField, categoryField, tagField} = settings;
   // get cell values
   const postId = record.getCellValue(settings.postIdField);
   const title = record.getCellValueAsString(settings.titleField);
@@ -24,9 +28,9 @@ function PostRecordToWordPress({table, record, settings, jsonWebToken}) {
   const dateAsString = settings.dateField ? record.getCellValueAsString(settings.dateField) : null;
   let sticky = settings.stickyField ? record.getCellValueAsString(settings.stickyField) : null;
   sticky = sticky ? true : false;
-  const categoriesAsString = record.getCellValueAsString(settings.categoryField);
+  const categoriesAsString = settings.categoryField ? record.getCellValueAsString(settings.categoryField) : null;
   const categoriesValue = categoriesAsString ? categoriesAsString.split(",").map(item => parseInt(item)) : []
-  const tagsAsString = record.getCellValueAsString(settings.tagField);
+  const tagsAsString = settings.tagField ? record.getCellValueAsString(settings.tagField) : null;
   const tagsValue = tagsAsString ? tagsAsString.split(",").map(item => parseInt(item)) : []
 
   const getWordPressPostBody = () => {
@@ -45,13 +49,9 @@ function PostRecordToWordPress({table, record, settings, jsonWebToken}) {
 
   const newPost = () => {
     setFetchStatus("fetching")
-    const url = wordPressDomain + "/wp-json/wp/v2/posts";
     const postBody = getWordPressPostBody();
     const callback = (data) => {
-      if (data) {
-        console.log(data)
-      }
-      if (data.id) {
+      if (data && data.id) {
         setFetchStatus("success")
         table.updateRecordAsync(record, {[settings.postIdField.name]: data.id});
       } else {
@@ -64,18 +64,31 @@ function PostRecordToWordPress({table, record, settings, jsonWebToken}) {
 
   const updatePost = () => {
     setFetchStatus("fetching")
-    const url = wordPressDomain + "/wp-json/wp/v2/posts/" + postId + "/";
     const postBody = getWordPressPostBody();
     const callback = (data) => {
-      console.log(data)
-      if (data.id) {
+      if (data && data.id) {
         setFetchStatus("success")
-        // table.updateRecordAsync(record, {[settings.postIdField.name]: data.id});
+        table.updateRecordAsync(record, {[settings.postIdField.name]: data.id});
       } else {
         setFetchStatus("failed")
       }
     };
     updateWordPressPost(wordPressDomain, jsonWebToken, postId, postBody, callback)
+  }
+
+
+  const deletePost = () => {
+    setFetchStatus("fetching")
+    const callback = (data) => {
+      console.log(data)
+      if (data && data.id) {
+        setFetchStatus("success")
+        table.updateRecordAsync(record, {[settings.postIdField.name]: null});
+      } else {
+        setFetchStatus("failed")
+      }
+    };
+    deleteWordPressPost(wordPressDomain, jsonWebToken, postId, callback)
   }
 
 
@@ -93,8 +106,10 @@ function PostRecordToWordPress({table, record, settings, jsonWebToken}) {
         height="100vh"
         overflow="hidden"
       >
-        <Text textAlign="center">Sending <i>{title}</i> to </Text>
+        <Text textAlign="center">Request sent to </Text>
         <Text textAlign="center">{wordPressDomain}</Text>
+        <br />
+        <Text textAlign="center">Waiting for the response.</Text>
         <br />
         <Loader scale={0.3} />
       </Box>
@@ -117,11 +132,10 @@ function PostRecordToWordPress({table, record, settings, jsonWebToken}) {
         overflow="hidden"
       >
         <Text textAlign="center">
-          Unable to post to <br/>
-          <strong>{wordPressDomain}</strong><br/>
+          Request failed<br/>
         </Text><br />
         <Text textAlign="center">
-          Make sure you are logged into the website as a user who is authorized to create and edit posts.
+          Make sure your WordPress user account is authorized to create, edit, and delete posts.
         </Text><br />
         <Button
           variant="primary"
@@ -162,28 +176,52 @@ function PostRecordToWordPress({table, record, settings, jsonWebToken}) {
   }
 
   return (
-    <div>
-      <div>
-      <Text>post id: {postId}</Text>
-      <Text>title: {title}</Text>
-      <Text>slug: {slug}</Text>
-      <Text>date: {dateAsString}</Text>
-      <Text>sticky: {sticky ? "yes" : "no" }</Text>
-      <Text>category numbers: {categoriesAsString}</Text>
-      <Text>tag numbers: {tagsAsString}</Text>
-      </div>
-      <Button
-        variant="primary"
-        onClick={postId ? updatePost : newPost }
-      >
-      {postId ? "Update Post" : "Create Post"}
-      </Button>
+    <Box
+    border="none"
+    padding="15px"
+    width="100%"
+    height="90vh"
+    display="flex"
+    flexDirection="row"
+    >
+      <Box>
+        <Text paddingY="5px"><b>title:</b> {title}</Text>
+        {settings.slugField ? <Text paddingY="5px"><b>slug:</b> {slug}</Text> : ""}
+        {settings.dateField ? <Text paddingY="5px"><b>date:</b> {dateAsString}</Text> : ""}
+        {settings.stickyField ? <Text paddingY="5px"><b>sticky:</b> {sticky ? "yes" : "no" }</Text> : ""}
+        {settings.categoryField ? <Text paddingY="5px"><b>category numbers:</b> {categoriesAsString}</Text> : ""}
+        {settings.tagField ? <Text paddingY="5px"><b>tag numbers:</b> {tagsAsString}</Text> : ""}
+        <Text paddingY="5px"><b>post id:</b> {postId}</Text>
+        <Button
+          marginY="5px"
+          variant="primary"
+          disabled={!title}
+          onClick={postId ? updatePost : newPost }
+        >
+        {postId ? "Update Post" : "Create Post"}
+        </Button>
+        <Tooltip
+          content="Post will be deleted only from WordPress. The record will remain in Airtable."
+          placementX={Tooltip.placements.CENTER}
+          placementY={Tooltip.placements.BOTTOM}
+          shouldHideTooltipOnClick={true}
+        >
+          <Button
+            marginY="5px"
+            variant="danger"
+            disabled={!postId}
+            onClick={deletePost }
+          >
+            Delete Post
+          </Button>
+        </Tooltip>
+      </Box>
       <iframe
-        srcDoc={content}
-        style={{width: '100%', height: '100%'}}
+        srcDoc={"<style>" + settings.customCss + "</style>"+ content}
+        style={{width: '90%', padding: '5px', minHeight: '0', height: '100%'}}
       >
       </iframe>
-    </div>
+    </Box>
   );
 }
 

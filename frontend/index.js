@@ -1,6 +1,7 @@
 import {
   initializeBlock,
   useSettingsButton,
+  ViewportConstraint,
 } from '@airtable/blocks/ui';
 import React, {useState} from 'react';
 import MainApp from './mainApp';
@@ -24,7 +25,12 @@ function App() {
       </div>
     )
   } else {
-    return <MainApp settings={settings} />
+    return (
+      <div>
+      <ViewportConstraint minSize={{width: 450}} />
+      <MainApp settings={settings} />
+      </div>
+    )
   }
 }
 

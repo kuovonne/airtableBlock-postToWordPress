@@ -15,7 +15,6 @@ import RecordFinder from './recordFinder';
 function MainApp({settings}) {
   // unpack the settings
   const wordPressDomain = settings.wordPressDomain;
-  const [isShowingCredentials, setIsShowingCredentials] = useState(true);
 
   const [jsonWebToken, setJsonWebToken] = useState(null);
   // track username in globalConfig and state
@@ -23,10 +22,9 @@ function MainApp({settings}) {
   const usernameInGlobalConfig = globalConfig.get("username");
   const [usernameInState, setUsernameInState] = useState(usernameInGlobalConfig ? usernameInGlobalConfig : null);
 
-  if (isShowingCredentials || !jsonWebToken) {
+  if (!jsonWebToken) {
     return (
       <Credentials
-        setIsShowingCredentials={setIsShowingCredentials}
         setJsonWebToken={setJsonWebToken}
         usernameInState={usernameInState}
         setUsernameInState={setUsernameInState}
@@ -36,10 +34,10 @@ function MainApp({settings}) {
     return (
       <Box padding="5px">
         <Text textAlign="center">
-        Logged into WordPress as <i>{usernameInState}</i> | <TextButton
-          onClick={() => setIsShowingCredentials(true)}
+        Logged into <b>{wordPressDomain}</b> as <b>{usernameInState}</b> | <TextButton
+          onClick={() => setJsonWebToken(null)}
         >
-        Change</TextButton>
+        Logout</TextButton>
         </Text>
         <hr style={{height:'2px', color:'gray'}} />
         <RecordFinder settings={settings} jsonWebToken={jsonWebToken} />

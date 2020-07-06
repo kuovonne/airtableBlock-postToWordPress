@@ -67,5 +67,5 @@ export function deleteWordPressPost(wordPressDomain, jwtoken, postId, callback) 
     return response.json()
   })
   .then(data => callback(data))
-  .catch(error => callback(data))
+  .catch(error => callback(error))
 }

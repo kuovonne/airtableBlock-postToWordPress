@@ -7,108 +7,32 @@ import {
   Input,
   InputSynced,
   Loader,
-  SwitchSynced,
+  Switch,
   Text,
   useGlobalConfig,
 } from '@airtable/blocks/ui';
 import React, {useState} from 'react';
 import getJsonWebToken from './getJsonWebToken';
 
-function Credentials({setIsShowingCredentials, usernameInState, setUsernameInState, setJsonWebToken}) {
+function Credentials({usernameInState, setUsernameInState, setJsonWebToken}) {
   // get info from GlobalConfig
   const globalConfig = useGlobalConfig();
   const canSaveToGlobalConfig = globalConfig.checkPermissionsForSet().hasPermission;
   const wordPressDomain = globalConfig.get("wordPressDomain");
-  const isEnabledSaveUsername = globalConfig.get("isEnabledSaveUsername");
   const usernameInGlobalConfig = globalConfig.get("username");
-  const isEnabledSavePassword = globalConfig.get("isEnabledSavePassword");
   const passwordInGlobalConfig = globalConfig.get("password");
   // credentials stored in state
   const [passwordInState, setPasswordInState] = useState("");
   // fetch status stored in state
   const [fetchStatus, setFetchStatus] = useState("notAttempted");
 
-  const setUsername = (username) => {
-    setUsernameInState(username)
-    setFetchStatus("notAttempted")
-    if (globalConfig.get("isEnabledSaveUsername") && canSaveToGlobalConfig) {
-      globalConfig.setAsync("username", username)
-    }
-  }
-  const clearUsernameInGlobalConfig = () => {
-    globalConfig.setAsync("username", null)
-  }
-  const setPassword = (password) => {
-    setPasswordInState(password)
-    setFetchStatus("notAttempted")
-    if (globalConfig.get("isEnabledSavePassword") && canSaveToGlobalConfig) {
-      globalConfig.setAsync("password", password)
-    }
-  }
-  const clearPasswordInGlobalConfig = () => {
-    globalConfig.setAsync("password", null)
-  }
-
-  const SwitchSaveUsername = () => {
-    return (
-      <SwitchSynced
-        globalConfigKey="isEnabledSaveUsername"
-        label="save for all block users"
-        backgroundColor="transparent"
-        onChange={newValue => {
-          if (newValue) {
-            globalConfig.setAsync("username", usernameInState)
-          } else {
-            globalConfig.setAsync("username", null)
-          }
-        }}
-      />
-    )
-  }
-
-
-  const SwitchSavePassword = () => {
-    return (
-      <SwitchSynced
-        globalConfigKey="isEnabledSavePassword"
-        label="save for all block users"
-        backgroundColor="transparent"
-        onChange={newValue => {
-          if (newValue) {
-            globalConfig.setAsync("password", passwordInState)
-          } else {
-            globalConfig.setAsync("password", null)
-          }
-        }}
-      />
-    )
-  }
-
-  const ButtonLoginWithSavedCredentials = () => {
-    return (
-      <div>
-        <Button
-          variant="primary"
-          disabled={!usernameInGlobalConfig || !passwordInGlobalConfig || !wordPressDomain}
-          onClick={() => {
-            setFetchStatus("fetching")
-            getJsonWebToken(wordPressDomain, usernameInGlobalConfig, passwordInGlobalConfig, callbackFromGetJWT)
-          }}
-        >
-        Login as {usernameInGlobalConfig}
-        </Button>
-        <hr style={{height:'2px', color:'gray'}} />
-      </div>
-    )
-  }
 
   const callbackFromGetJWT = (result) => {
     if (result.success) {
       setJsonWebToken(result.token)
       setFetchStatus("success")
-      setIsShowingCredentials(false)
     } else {
-      setJsonWebToken(JSON.stringify(result))
+      setJsonWebToken(null)
       setFetchStatus("failed")
     }
   }
@@ -177,39 +101,77 @@ function Credentials({setIsShowingCredentials, usernameInState, setUsernameInSta
 
   return (
     <div style={{padding: '15px', 'height': '100vh'}}>
-      <Heading>Login to your WordPress website</Heading>
-      <Text>{wordPressDomain}</Text>
+      <Heading  textAlign="center">Login to your WordPress website</Heading>
+      <Text  textAlign="center">{wordPressDomain}</Text>
       <hr style={{height:'2px', color:'gray'}} />
-      {usernameInGlobalConfig && passwordInGlobalConfig ? <ButtonLoginWithSavedCredentials /> : ""}
-      <FormField label="Username">
-        <Input
-          value={usernameInState}
-          onChange={e => setUsername(e.target.value)}
-        />
-      {canSaveToGlobalConfig ? <SwitchSaveUsername /> : ""}
-      </FormField>
-      <hr style={{height:'2px', color:'gray'}} />
-      <FormField label="Password">
-        <input
-          type="password"
-          value={passwordInState}
-          onChange={e => {
-            setPassword(e.target.value)
-          }}
-        />
-        {canSaveToGlobalConfig ? <SwitchSavePassword /> : ""}
-      </FormField>
-      <hr style={{height:'2px', color:'gray'}} />
-      <Button
-        variant="primary"
-        disabled={!usernameInState || !passwordInState || !wordPressDomain}
-        onClick={() => {
-          setFetchStatus("fetching")
-          getJsonWebToken(wordPressDomain, usernameInState, passwordInState, callbackFromGetJWT)
-        }}
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
       >
-      Login
-      </Button>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          padding="5px"
+        >
+          <Button
+            variant="primary"
+            disabled={!usernameInGlobalConfig || !passwordInGlobalConfig}
+            onClick={() => {
+              setFetchStatus("fetching")
+              getJsonWebToken(wordPressDomain, usernameInGlobalConfig, passwordInGlobalConfig, callbackFromGetJWT)
+            }}
+          >
+          Login as saved user
+          </Button>
+        </Box>
+        <Box
+          display="flex"
+          flexDirection="column"
+          borderLeft="thick"
+          borderRadius="0"
+          height="100%"
+          width="100%"
+          padding="15px"
+          margin="15px"
+        >
+          <FormField label="Username">
+            <Input
+              value={usernameInState}
+              onChange={e => setUsernameInState(e.target.value)}
+            />
+          </FormField>
+          <FormField label="Password">
+            <input
+              type="password"
+              value={passwordInState}
+              onChange={e => setPasswordInState(e.target.value)}
+            />
+          </FormField>
+          <Button
+            variant="primary"
+            disabled={!canSaveToGlobalConfig}
+            onClick={() => {
+              globalConfig.setAsync("username", usernameInState)
+              globalConfig.setAsync("password", passwordInState)
+            }}
+          >
+          Save credentials for all users
+          </Button>
+          <Button
+            variant="primary"
+            marginY="15px"
+            disabled={!usernameInState || !passwordInState || !wordPressDomain}
+            onClick={() => {
+              setFetchStatus("fetching")
+              getJsonWebToken(wordPressDomain, usernameInState, passwordInState, callbackFromGetJWT)
+            }}
+          >
+          Login
+          </Button>
+        </Box>
+      </Box>
     </div>
   );
 }
